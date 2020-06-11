@@ -3,6 +3,9 @@ A script to numerically solve for the temperature profile in a cylinder
 in cross flow with transient convective heat loss
 @author: tomMulholland
 23-April-2014
+Edits 10 Jun 2020
+Equations from Incropera Fundamentals of Heat and Mass Transfer, 6 ed, Ch 5.6, Radial Systems with Convection pp. 276
+Nusselt number from same book, Ch. 7.4, The Cylinder in Cross Flow, pp. 427, Eq. 7.53
 """
 
 from scipy.optimize import minimize
@@ -27,7 +30,7 @@ def C_n_func(x):
 start_time = (strftime("%Y-%m-%d %H:%M:%S", gmtime()))
 
 # DEFINE CONSTANTS
-D = 0.004 # diameter of cylinder [m]
+D = 0.00175 # diameter of cylinder [m]
 k_cyl = 0.16 # thermal conductivity of cylinder (polypropylene) [W/m-K]
 alpha_cyl = 7.30167E-08
 T_inf = 28
@@ -97,7 +100,7 @@ for r in r_dim:
     theta_partial = np.array([])
     
     for i in range(len(zeta)):
-        result = C_n[i] * np.exp(-1*zeta[i] * Fourier) * jn(0, zeta[i]*r)
+        result = C_n[i] * np.exp(-1*zeta[i]**2 * Fourier) * jn(0, zeta[i]*r)
         theta_partial = np.append(theta_partial, [[result]])
                 
     theta_partial.shape = (len(zeta), total_time+1)
@@ -114,6 +117,8 @@ condition = (surface_temp < T_final_surface + 0.5) * \
   (surface_temp > T_final_surface - 0.5)
 result = np.extract(condition, surface_temp)
 index = np.where(surface_temp == result[0])
+# Fourier = alpha * t / Lc^2
+time = Fourier * (D/2)**2 / alpha_cyl
 time_to_final_temp = int(time[index])
 
 # FINAL ANSWER
@@ -128,10 +133,10 @@ print("Start Time: " + start_time)
 print("End Time: " + end_time)
 
 # PLOT RESULTS
-time = np.linspace(0,total_time, num=total_time+1)
+
 for i in range(len(T)):
     pyplot.plot(time, T[i][0], label=("r* = " + str(r_dim[i])))
 
 pyplot.legend()
 pyplot.show()
-pyplot.savefig("cylinder_cooling1.png", format='png', dpi=450)
+# pyplot.savefig("cylinder_cooling1.png", format='png', dpi=450)
